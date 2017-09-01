@@ -2127,7 +2127,7 @@
         }
     ],
     "aliases": [],
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "stability-flags": {
         "mockery/mockery": 20,
         "sami/sami": 20
