@@ -27,6 +27,16 @@ trait EntrustUserTrait
         }
         else return $this->roles()->get();
     }
+
+    public function cachedPermissions()
+    {
+        $userPrimaryKey = $this->primaryKey;
+        $cacheKey = 'entrust_roles_for_user_'.$this->$userPrimaryKey;
+        return Cache::tags(Config::get('entrust.permission_user_table'))->remember($cacheKey, Config::get('cache.ttl'), function () {
+            return $this->permissions()->get();
+        });
+    }
+
     public function save(array $options = [])
     {   //both inserts and updates
         if(Cache::getStore() instanceof TaggableStore) {
@@ -59,6 +69,10 @@ trait EntrustUserTrait
         return $this->belongsToMany(Config::get('entrust.role'), Config::get('entrust.role_user_table'), Config::get('entrust.user_foreign_key'), Config::get('entrust.role_foreign_key'));
     }
 
+    public function permissions()
+    {
+        return $this->belongsToMany(Config::get('entrust.permission'));
+    }
     /**
      * Boot the user model
      * Attach event listener to remove the many-to-many records when trying to delete
@@ -147,6 +161,12 @@ trait EntrustUserTrait
                     if (str_is( $permission, $perm->name) ) {
                         return true;
                     }
+                }
+            }
+            foreach ($this->cachedPermissions() as $perm) {
+                // Validate against the Permission table
+                if (str_is( $permission, $perm->name) ) {
+                    return true;
                 }
             }
         }
